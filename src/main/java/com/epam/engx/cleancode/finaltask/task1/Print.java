@@ -41,22 +41,22 @@ public class Print implements Command {
     public void process(String input) {
         String[] commandParts = input.split(COMMAND_DELIMITER);
 
-        validateCommandLengthOrThrow(commandParts);
+        validateCommandLength(commandParts.length);
 
         String tableName = commandParts[TABLE_NAME_POSITION];
         List<DataSet> data = manager.getTableData(tableName);
         view.write(getTableString(tableName, data));
     }
 
-    private void validateCommandLengthOrThrow(String[] commandParts) {
-        if (commandParts.length != ALLOWED_COMMAND_LENGTH) {
-            throw new IllegalArgumentException(String.format(ILLEGAL_ARGUMENT_ERROR_MESSAGE_TEMPLATE, (commandParts.length - 1)));
+    private void validateCommandLength(int length) {
+        if (length != ALLOWED_COMMAND_LENGTH) {
+            throw new IllegalArgumentException(String.format(ILLEGAL_ARGUMENT_ERROR_MESSAGE_TEMPLATE, (length - 1)));
         }
     }
 
     private String getTableString(String tableName, List<DataSet> data) {
         return isEmptyTable(data) ?
-                buildEmptyTableWithName(tableName).toString() : buildTable(data).toString();
+                buildEmptyTableWithName(tableName) : buildTable(data);
     }
 
     private boolean isEmptyTable(List<DataSet> data) {
@@ -98,7 +98,7 @@ public class Print implements Command {
         return String.valueOf(longestLine).length();
     }
 
-    private StringBuilder buildEmptyTableWithName(String tableName) {
+    private String buildEmptyTableWithName(String tableName) {
         String tableText = String.format(EMPTY_TABLE_TEXT_TEMPLATE, tableName);
         int contentLength = tableText.length() - NUMBER_OF_ENCLOSING_BORDER_ELEMENTS;
 
@@ -111,15 +111,14 @@ public class Print implements Command {
                 .append(LevelBoundary.BOTTOM.leftBoundary)
                 .append(duplicateSymbol(BORDER_LINE_ELEMENT, contentLength))
                 .append(LevelBoundary.BOTTOM.rightBoundary)
-                .append(NEW_LINE);
+                .append(NEW_LINE).toString();
     }
 
-    private StringBuilder buildTable(List<DataSet> data) {
-        return buildTableHeader(data)
-                .append(buildTableBodyWithData(data));
+    private String buildTable(List<DataSet> data) {
+        return buildTableHeader(data) + buildTableBodyWithData(data);
     }
 
-    private StringBuilder buildTableHeader(List<DataSet> dataSets) {
+    private String buildTableHeader(List<DataSet> dataSets) {
         int lengthOfTheLongestColumn = calculateLengthOfTheLongestColumn(dataSets);
         int columnCount = getColumnCount(dataSets);
         List<String> columnNames = dataSets.get(0).getColumnNames();
@@ -133,7 +132,7 @@ public class Print implements Command {
 
         result.append(VERTICAL_BORDER_ELEMENT).append(NEW_LINE);
         result.append(buildTableLine(lengthOfTheLongestColumn, columnCount, LevelBoundary.MIDDLE));
-        return result;
+        return result.toString();
     }
 
     private int calculateLengthOfTheLongestColumn(List<DataSet> data) {
@@ -152,7 +151,7 @@ public class Print implements Command {
         return dataSets.isEmpty() ? 0 : dataSets.get(0).getColumnNames().size();
     }
 
-    private StringBuilder buildHeaderContent(int lengthOfTheLongestColumn, List<String> columnNames, int column) {
+    private String buildHeaderContent(int lengthOfTheLongestColumn, List<String> columnNames, int column) {
         int columnNamesLength = columnNames.get(column).length();
         int currentColumnLength = ((lengthOfTheLongestColumn - columnNamesLength) / 2);
 
@@ -163,10 +162,10 @@ public class Print implements Command {
         } else {
             result.append(buildTableDataIfContentLengthIsOdd(currentColumnLength, columnNames.get(column)));
         }
-        return result;
+        return result.toString();
     }
 
-    private StringBuilder buildTableBodyWithData(List<DataSet> dataSets) {
+    private String buildTableBodyWithData(List<DataSet> dataSets) {
         int lengthOfTheLongestColumn = calculateLengthOfTheLongestColumn(dataSets);
         int rowsCount = dataSets.size();
         int columnCount = getColumnCount(dataSets);
@@ -183,14 +182,14 @@ public class Print implements Command {
         }
         result.append(buildTableLine(lengthOfTheLongestColumn, columnCount, LevelBoundary.BOTTOM));
 
-        return result;
+        return result.toString();
     }
 
     private boolean isNotLastRow(int rowsCount, int row) {
         return row < rowsCount - 1;
     }
 
-    private StringBuilder buildBody(int maxColumnLength, int columnCount, List<Object> values) {
+    private String buildBody(int maxColumnLength, int columnCount, List<Object> values) {
         StringBuilder result = new StringBuilder(VERTICAL_BORDER_ELEMENT);
 
         for (int column = 0; column < columnCount; column++) {
@@ -204,24 +203,25 @@ public class Print implements Command {
             }
             result.append(VERTICAL_BORDER_ELEMENT);
         }
-        return result.append(NEW_LINE);
+        return result.append(NEW_LINE).toString();
     }
 
-    private StringBuilder buildTableDataIfContentLengthIsEven(int columnLength, Object value) {
+    private String buildTableDataIfContentLengthIsEven(int columnLength, Object value) {
         return new StringBuilder()
                 .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength))
                 .append(value)
-                .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength));
+                .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength)).toString();
     }
 
-    private StringBuilder buildTableDataIfContentLengthIsOdd(int columnLength, Object value) {
+    private String buildTableDataIfContentLengthIsOdd(int columnLength, Object value) {
         return new StringBuilder()
                 .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength))
                 .append(value)
-                .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength + NUMBER_TO_ADD_IF_BODY_LENGTH_ODD));
+                .append(duplicateSymbol(TABLE_CONTENT_ELEMENT_SPACE, columnLength + NUMBER_TO_ADD_IF_BODY_LENGTH_ODD))
+                .toString();
     }
 
-    private StringBuilder buildTableLine(int columnLength, int columnCount, LevelBoundary elements) {
+    private String buildTableLine(int columnLength, int columnCount, LevelBoundary elements) {
 
         String columnLineTemplate = duplicateSymbol(BORDER_LINE_ELEMENT, columnLength);
         String lineWithoutLastColumn = duplicateSymbol(columnLineTemplate + elements.middleBoundary, columnCount - 1);
@@ -229,7 +229,7 @@ public class Print implements Command {
         return new StringBuilder(elements.leftBoundary)
                 .append(lineWithoutLastColumn)
                 .append(lastColumnLine)
-                .append(NEW_LINE);
+                .append(NEW_LINE).toString();
     }
 
     private String duplicateSymbol(String symbol, int times) {
